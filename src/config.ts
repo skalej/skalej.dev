@@ -1,23 +1,23 @@
 export const SITE = {
-  website: "https://astro-paper.pages.dev/", // replace this with your deployed domain
-  author: "Sat Naing",
-  profile: "https://satnaing.dev/",
-  desc: "A minimal, responsive and SEO-friendly Astro blog theme.",
-  title: "AstroPaper",
-  ogImage: "astropaper-og.jpg",
+  website: "https://YOUR-PROJECT.pages.dev/", // or "https://yourdomain.com/"
+  author: "YOUR NAME",
+  profile: "https://yourdomain.com/about/", // or your GitHub/LinkedIn
+  desc: "Personal site of YOUR NAME. Writing about X, Y, Z.",
+  title: "YOUR SITE TITLE",
+  ogImage: "astropaper-og.jpg", // put your own image in /public if you want
   lightAndDarkMode: true,
-  postPerIndex: 4,
-  postPerPage: 4,
-  scheduledPostMargin: 15 * 60 * 1000, // 15 minutes
+  postPerIndex: 6,
+  postPerPage: 6,
+  scheduledPostMargin: 15 * 60 * 1000,
   showArchives: true,
-  showBackButton: true, // show back button in post detail
+  showBackButton: true,
   editPost: {
-    enabled: true,
+    enabled: false, // turn on only if you want "Edit page" links
     text: "Edit page",
-    url: "https://github.com/satnaing/astro-paper/edit/main/",
+    url: "https://github.com/YOURUSER/YOURREPO/edit/main/",
   },
   dynamicOgImage: true,
-  dir: "ltr", // "rtl" | "auto"
-  lang: "en", // html lang code. Set this empty and default will be "en"
-  timezone: "Asia/Bangkok", // Default global timezone (IANA format) https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  dir: "ltr",
+  lang: "en",
+  timezone: "Europe/Berlin",
 } as const;
