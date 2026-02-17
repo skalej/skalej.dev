@@ -1,0 +1,34 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Main from "@/layouts/Main.astro";
+import ProjectCard from "@/components/ProjectCard.astro";
+import { SITE } from "@/config";
+
+const projects = await getCollection("projects", ({ data }) => !data.draft);
+const sortedProjects = projects.sort(
+  (a, b) =>
+    Math.floor(b.data.pubDatetime.getTime() / 1000) -
+    Math.floor(a.data.pubDatetime.getTime() / 1000)
+);
+---
+
+<Layout title={`Projects | ${SITE.title}`}>
+  <Header />
+  <Main pageTitle="Projects" pageDesc="Things I've built.">
+    {
+      sortedProjects.length > 0 ? (
+        <ul>
+          {sortedProjects.map(project => (
+            <ProjectCard {...project} />
+          ))}
+        </ul>
+      ) : (
+        <p class="mt-4 text-foreground/70">No projects yet. Check back soon!</p>
+      )
+    }
+  </Main>
+  <Footer />
+</Layout>

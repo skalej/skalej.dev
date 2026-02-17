@@ -1,0 +1,57 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+type Props = CollectionEntry<"projects">;
+
+const { data } = Astro.props;
+const { title, description, techStack, liveUrl, githubUrl } = data;
+---
+
+<li class="my-6">
+  <div class="flex flex-col gap-2">
+    <div class="flex items-center gap-3">
+      <h2
+        class="inline-block text-lg font-medium text-accent"
+      >
+        {
+          liveUrl ? (
+            <a
+              href={liveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="decoration-dashed underline-offset-4 hover:underline focus-visible:no-underline focus-visible:underline-offset-0"
+            >
+              {title}
+            </a>
+          ) : (
+            title
+          )
+        }
+      </h2>
+      {
+        githubUrl && (
+          <a
+            href={githubUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-sm text-foreground/70 decoration-dashed underline-offset-4 hover:text-accent hover:underline"
+          >
+            GitHub
+          </a>
+        )
+      }
+    </div>
+    <p>{description}</p>
+    {
+      techStack.length > 0 && (
+        <ul class="flex flex-wrap gap-2">
+          {techStack.map(tech => (
+            <li class="rounded-md bg-foreground/10 px-2 py-0.5 text-xs font-medium text-foreground/80">
+              {tech}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </div>
+</li>
