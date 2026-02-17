@@ -3,35 +3,48 @@ layout: ../layouts/AboutLayout.astro
 title: "About"
 ---
 
-AstroPaper is a minimal, accessible and SEO-friendly blog theme built with [Astro](https://astro.build/) and [Tailwind CSS](https://tailwindcss.com/).
+I design and deliver event-driven backend systems that automate complex operational workflows at scale.
 
-![Astro Paper](public/astropaper-og.jpg)
+With 15+ years of experience across finance and large-scale e-commerce, I focus on translating ambiguous business requirements into reliable, observable, and maintainable systems. My work spans policy-driven services, asynchronous processing patterns, and cloud-native automation.
 
-AstroPaper provides a solid foundation for blogs, or even portfolios\_ with full markdown support, built-in dark mode, and a clean layout that works out-of-the-box.
+At Wayfair (Berlin), I worked on the Notifications and Supplier Actions platform, helping decouple legacy PHP workflows into event-driven microservices using Java, Spring Boot, Kafka, and Google Cloud. 
 
-The blog posts in this theme also serve as guides, docs or example articles\_ making AstroPaper a flexible starting point for your next content-driven site.
+Key initiatives included:
 
-## Features
+- Migrating supplier email workflows from a legacy monolith to an event-based architecture, improving observability and enabling infrastructure decommissioning.
+- Onboarding Google Cloud Tasks to power reminder and auto-closing workflows, reducing manual supplier action handling.
+- Designing the VAS Overpack policy system — a configurable packaging preference service integrated into fulfillment workflows.
 
-AstroPaper comes with a set of useful features that make content publishing easy and effective:
+---
 
-- SEO-friendly
-- Fast performance
-- Light & dark mode
-- Highly customizable
-- Organizable blog posts
-- Responsive & accessible
-- Static search with [PageFind](https://pagefind.app/)
-- Automatic social image generation
+## How I Think About Systems
 
-and so much more.
+I care about:
 
-## Show your support
+- Clear service boundaries
+- Deterministic workflow behavior
+- Failure handling and retries
+- Observability (metrics, dashboards, postmortems)
+- Pragmatic trade-offs over theoretical purity
 
-If you like [AstroPaper](https://github.com/satnaing/astro-paper), consider giving it a star ⭐️.
+I enjoy leading initiatives from architecture through delivery — structuring execution, aligning teams, and shipping systems safely.
 
-Found a bug 🐛 or have an improvement ✨ in mind? Feel free to open an [issue](https://github.com/satnaing/astro-paper/issues), submit a [pull request](https://github.com/satnaing/astro-paper/pulls) or start a [discussion](https://github.com/satnaing/astro-paper/discussions).
+---
 
-If you find this theme helpful, you can also [sponsor me on GitHub](https://github.com/sponsors/satnaing) or [buy me a coffee](https://buymeacoffee.com/satnaing) to show your support — every penny counts.
+## Writing & Technical Notes
 
-Kyay zuu! 🙏🏼
+This site contains longer versions of my LinkedIn posts, where I write about:
+
+- Backend architecture and distributed systems
+- Event-driven workflows and automation
+- Reliability and failure handling in production systems
+- Practical implementations and design trade-offs
+- Learning and experimenting with AI technologies, including LLM-based workflows and their role in modern system design
+
+---
+
+## Current Focus
+
+I’m currently building a deterministic validation pipeline for German E-Invoices (XRechnung / ZUGFeRD), focused on explainable findings, idempotent processing, and audit-friendly workflows.
+
+If you're interested in backend architecture, workflow automation, or distributed systems design — feel free to connect.

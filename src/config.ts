@@ -3,7 +3,7 @@ export const SITE = {
   author: "YOUR NAME",
   profile: "https://yourdomain.com/about/", // or your GitHub/LinkedIn
   desc: "Personal site of YOUR NAME. Writing about X, Y, Z.",
-  title: "YOUR SITE TITLE",
+  title: "Saeid Kaleji",
   ogImage: "astropaper-og.jpg", // put your own image in /public if you want
   lightAndDarkMode: true,
   postPerIndex: 6,

@@ -1,0 +1,110 @@
+---
+import { Image } from "astro:assets";
+import { render, type CollectionEntry } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import BackButton from "@/components/BackButton.astro";
+import { SITE } from "@/config";
+
+type Props = {
+  project: CollectionEntry<"projects">;
+};
+
+const { project } = Astro.props;
+const { title, description, techStack, liveUrl, githubUrl, pubDatetime, image } =
+  project.data;
+
+const { Content } = await render(project);
+
+const layoutProps = {
+  title: `${title} | ${SITE.title}`,
+  description,
+  scrollSmooth: true,
+};
+---
+
+<Layout {...layoutProps}>
+  <Header />
+  <BackButton />
+  <main
+    id="main-content"
+    class:list={["app-layout pb-12", { "mt-8": !SITE.showBackButton }]}
+  >
+    <h1 class="inline-block text-2xl font-bold text-accent sm:text-3xl">
+      {title}
+    </h1>
+
+    <div class="my-4 flex flex-wrap items-center gap-3 text-sm text-foreground/70">
+      <time datetime={pubDatetime.toISOString()}>
+        {pubDatetime.toLocaleDateString("en-us", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })}
+      </time>
+      {
+        liveUrl && (
+          <>
+            <span aria-hidden="true">|</span>
+            <a
+              href={liveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="decoration-dashed underline-offset-4 hover:text-accent hover:underline"
+            >
+              Live Demo
+            </a>
+          </>
+        )
+      }
+      {
+        githubUrl && (
+          <>
+            <span aria-hidden="true">|</span>
+            <a
+              href={githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="decoration-dashed underline-offset-4 hover:text-accent hover:underline"
+            >
+              GitHub
+            </a>
+          </>
+        )
+      }
+    </div>
+
+    {
+      techStack.length > 0 && (
+        <ul class="mb-8 flex flex-wrap gap-2">
+          {techStack.map(tech => (
+            <li class="rounded-md bg-foreground/10 px-2 py-0.5 text-xs font-medium text-foreground/80">
+              {tech}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    {
+      image && (
+        <div class="my-6 overflow-hidden rounded-lg border border-foreground/10">
+          {typeof image === "string" ? (
+            <img src={image} alt={title} class="w-full" />
+          ) : (
+            <Image src={image} alt={title} class="w-full" />
+          )}
+        </div>
+      )
+    }
+
+    <article
+      id="article"
+      class="app-prose mt-8 w-full max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"
+    >
+      <Content />
+    </article>
+  </main>
+  <Footer />
+</Layout>

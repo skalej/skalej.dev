@@ -3,8 +3,9 @@ import type { CollectionEntry } from "astro:content";
 
 type Props = CollectionEntry<"projects">;
 
-const { data } = Astro.props;
+const { id, data } = Astro.props;
 const { title, description, techStack, liveUrl, githubUrl } = data;
+const href = `/projects/${id}/`;
 ---
 
 <li class="my-6">
@@ -13,20 +14,12 @@ const { title, description, techStack, liveUrl, githubUrl } = data;
       <h2
         class="inline-block text-lg font-medium text-accent"
       >
-        {
-          liveUrl ? (
-            <a
-              href={liveUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="decoration-dashed underline-offset-4 hover:underline focus-visible:no-underline focus-visible:underline-offset-0"
-            >
-              {title}
-            </a>
-          ) : (
-            title
-          )
-        }
+        <a
+          href={href}
+          class="decoration-dashed underline-offset-4 hover:underline focus-visible:no-underline focus-visible:underline-offset-0"
+        >
+          {title}
+        </a>
       </h2>
       {
         githubUrl && (
