@@ -14,6 +14,15 @@ techStack:
 liveUrl: ""
 githubUrl: ""
 image: ../../assets/images/rechnungradar.png
+keywords:
+  - "XRechnung validation"
+  - "ZUGFeRD validation"
+  - "e-invoice validation tool"
+  - "German e-invoicing"
+  - "XRechnung compliance check"
+  - "invoice pre-validation"
+  - "Kanzlei invoice automation"
+  - "structured invoice validation"
 ---
 
 RechnungRadar is a pre-validation gateway for inbound German e-invoices (XRechnung and ZUGFeRD).

@@ -1,10 +1,10 @@
 export const SITE = {
-  website: "https://YOUR-PROJECT.pages.dev/", // or "https://yourdomain.com/"
-  author: "YOUR NAME",
-  profile: "https://yourdomain.com/about/", // or your GitHub/LinkedIn
-  desc: "Personal site of YOUR NAME. Writing about X, Y, Z.",
+  website: "https://skalej.dev/",
+  author: "Saeid Kaleji",
+  profile: "https://skalej.dev/about/",
+  desc: "Software engineer based in Germany. Building tools for e-invoicing, language learning, and developer productivity.",
   title: "Saeid Kaleji",
-  ogImage: "astropaper-og.jpg", // put your own image in /public if you want
+  ogImage: "astropaper-og.jpg",
   lightAndDarkMode: true,
   postPerIndex: 6,
   postPerPage: 6,
@@ -12,7 +12,7 @@ export const SITE = {
   showArchives: true,
   showBackButton: true,
   editPost: {
-    enabled: false, // turn on only if you want "Edit page" links
+    enabled: false,
     text: "Edit page",
     url: "https://github.com/YOURUSER/YOURREPO/edit/main/",
   },

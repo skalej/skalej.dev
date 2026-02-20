@@ -12,15 +12,43 @@ type Props = {
 };
 
 const { project } = Astro.props;
-const { title, description, techStack, liveUrl, githubUrl, pubDatetime, image } =
+const { title, description, techStack, liveUrl, githubUrl, pubDatetime, image, keywords } =
   project.data;
 
 const { Content } = await render(project);
 
+const structuredData: Record<string, unknown> = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: title,
+  description,
+  applicationCategory: "DeveloperApplication",
+  datePublished: pubDatetime.toISOString(),
+  ...(liveUrl && { url: liveUrl }),
+  ...(image && { image: typeof image === "string" ? image : image.src }),
+  author: {
+    "@type": "Person",
+    name: SITE.author,
+    url: SITE.profile,
+  },
+  ...(techStack.length > 0 && {
+    programmingLanguage: techStack,
+  }),
+  ...(githubUrl && {
+    codeRepository: githubUrl,
+  }),
+  ...(keywords.length > 0 && {
+    keywords: keywords.join(", "),
+  }),
+};
+
 const layoutProps = {
   title: `${title} | ${SITE.title}`,
   description,
+  pubDatetime,
   scrollSmooth: true,
+  structuredData,
+  keywords,
 };
 ---
 

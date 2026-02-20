@@ -15,6 +15,8 @@ type Props = {
   pubDatetime?: Date;
   modDatetime?: Date | null;
   scrollSmooth?: boolean;
+  structuredData?: Record<string, unknown>;
+  keywords?: string[];
 };
 
 const {
@@ -27,11 +29,13 @@ const {
   pubDatetime,
   modDatetime,
   scrollSmooth = false,
+  structuredData: structuredDataOverride,
+  keywords = [],
 } = Astro.props;
 
 const socialImageURL = new URL(ogImage, Astro.url);
 
-const structuredData = {
+const defaultStructuredData = {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
   headline: `${title}`,
@@ -46,6 +50,8 @@ const structuredData = {
     },
   ],
 };
+
+const structuredData = structuredDataOverride ?? defaultStructuredData;
 ---
 
 <!doctype html>
@@ -72,6 +78,8 @@ const structuredData = {
     <meta name="title" content={title} />
     <meta name="description" content={description} />
     <meta name="author" content={author} />
+    <meta name="robots" content="index, follow" />
+    {keywords.length > 0 && <meta name="keywords" content={keywords.join(", ")} />}
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <!-- Open Graph / Facebook -->
