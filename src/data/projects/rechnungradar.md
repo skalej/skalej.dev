@@ -14,6 +14,7 @@ techStack:
 liveUrl: ""
 githubUrl: ""
 image: ../../assets/images/rechnungradar.png
+logo: ../../assets/images/rechnungradar-icon.jpg
 keywords:
   - "XRechnung validation"
   - "ZUGFeRD validation"

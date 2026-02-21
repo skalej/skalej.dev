@@ -12,7 +12,7 @@ type Props = {
 };
 
 const { project } = Astro.props;
-const { title, description, techStack, liveUrl, githubUrl, pubDatetime, image, keywords } =
+const { title, description, techStack, liveUrl, githubUrl, pubDatetime, image, logo, keywords } =
   project.data;
 
 const { Content } = await render(project);
@@ -64,9 +64,22 @@ const layoutProps = {
     id="main-content"
     class:list={["app-layout pb-12", { "mt-8": !SITE.showBackButton }]}
   >
-    <h1 class="inline-block text-2xl font-bold text-accent sm:text-3xl">
-      {title}
-    </h1>
+    <div class="flex items-center gap-1">
+      <h1 class="text-2xl font-bold text-accent sm:text-3xl">
+        {title}
+      </h1>
+      {
+        logo && (
+          <div class="shrink-0">
+            {typeof logo === "string" ? (
+              <img src={logo} alt={`${title} logo`} class="h-8 w-auto sm:h-10" />
+            ) : (
+              <Image src={logo} alt={`${title} logo`} class="h-8 w-auto sm:h-10" layout="none" />
+            )}
+          </div>
+        )
+      }
+    </div>
 
     <div class="my-4 flex flex-wrap items-center gap-3 text-sm text-foreground/70">
       <time datetime={pubDatetime.toISOString()}>

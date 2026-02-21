@@ -1,7 +1,7 @@
 ---
 title: "Correction Invoices and Storno in German E-Invoicing"
-description: "How correction invoices and Storno (cancellations) work in XRechnung and ZUGFeRD — document chains, effective versions, and avoiding double-counting in accounting exports."
-pubDatetime: 2026-01-30T00:00:00Z
+description: "Document chains, effective versions, and the double-counting problem when handling correction invoices and Storno in XRechnung and ZUGFeRD."
+pubDatetime: 2026-01-26T15:45:00Z
 draft: false
 tags:
   - "xrechnung"
@@ -11,37 +11,37 @@ tags:
   - "germany"
 ---
 
-In German accounting workflows, invoices are not always final. Suppliers issue **correction invoices** (Rechnungskorrektur) to fix errors and **Storno documents** (Stornierungen) to cancel invoices entirely. If your system treats each document as independent, you end up with double-counted amounts, confused exports, and audit problems.
+A supplier sends a correction invoice. Then a Storno. Then a new corrected version. If your system treats each document as independent, you end up double-counting amounts, exporting confused totals, and spending time untangling things during audit.
 
-This post covers how corrections and cancellations work in structured e-invoices (XRechnung and ZUGFeRD), how to link them reliably, and what Kanzlei offices need to handle them correctly.
+This is a common problem in German accounting workflows, and getting it right requires understanding how documents relate to each other.
 
 ## Table of contents
 
-## The three document roles
+## Three document roles
 
 Every e-invoice document falls into one of three roles:
 
-- **Original** — the initial invoice document received from a supplier
-- **Correction** (Rechnungskorrektur) — a revised invoice that replaces or corrects a previous one
-- **Storno** (Stornierung / Gutschrift) — a document that cancels a previous invoice, often with negative totals
+- **Original**: the initial invoice from a supplier
+- **Correction** (Rechnungskorrektur): a revised invoice that replaces or corrects a previous one
+- **Storno** (Stornierung / Gutschrift): a document that cancels a previous invoice, often with negative totals
 
-The supplier issues corrections and cancellations. The receiving side (your Kanzlei or AP team) needs to detect the role, link it to the right original, and ensure accounting exports reflect the correct effective amounts.
+The supplier issues corrections and cancellations. Your Kanzlei or AP team needs to detect the role, link it to the right original, and make sure accounting exports reflect the correct effective amounts.
 
-## How corrections and cancellations are detected
+## Detecting corrections and cancellations
 
-Both XRechnung syntaxes (UBL and CII) provide structured reference fields to indicate that a document relates to an earlier invoice — typically a reference to the original invoice number and a document type code that distinguishes standard invoices from credit notes.
+Both XRechnung syntaxes (UBL and CII) provide structured reference fields to indicate that a document relates to an earlier invoice, typically a reference to the original invoice number plus a document type code distinguishing standard invoices from credit notes.
 
-In practice, these references are not always present or complete. Some ERP systems omit them. Some suppliers include a reference in free-text notes instead of structured fields. This means detection needs a fallback strategy:
+The catch: these references are not always present. Some ERP systems omit them. Some suppliers put the reference in free-text notes instead of structured fields. So detection needs a fallback strategy:
 
 1. **Structured reference** in the XML (highest confidence)
-2. **Heuristic matching** — same supplier + referenced invoice number in text + matching amounts
-3. **Manual linking** — a user selects the original invoice when automatic detection fails
+2. **Heuristic matching**: same supplier + referenced invoice number in text + matching amounts
+3. **Manual linking**: a user selects the original when automatic detection fails
 
-How this is handled should be configurable per mandant — some clients want strict automatic linking, others prefer to review every link manually. The key is that the system supports both approaches and makes the detection method transparent.
+How this works should be configurable per mandant. Some clients want strict automatic linking, others prefer to review every link themselves. What matters is that the system supports both and makes the detection method transparent.
 
 ## Document chains
 
-When a correction is linked to an original, they form a **document chain**:
+When a correction is linked to an original, they form a document chain:
 
 ```
 Original Invoice #2024-001
@@ -56,15 +56,15 @@ Original Invoice #2024-002
   └── Storno #2024-002-S (cancels original)
 ```
 
-Chains can also combine both — a supplier cancels an invoice and then issues a new corrected version.
+Chains can combine both, too. A supplier cancels an invoice and issues a new corrected version.
 
-The critical concept is the **effective version**: at any point, only one document in a chain should be treated as the active invoice for accounting purposes. Earlier versions are superseded or canceled.
+The important concept here is the **effective version**: at any point, only one document in a chain should be treated as the active invoice for accounting. Earlier versions are superseded or canceled.
 
 ## The double-counting problem
 
-If corrections and originals are both included in an accounting export without chain awareness, amounts get counted twice. This is the most common operational error.
+If corrections and originals both end up in an accounting export without chain awareness, amounts get counted twice. This is the most common operational error I've seen.
 
-Consider a concrete scenario. A supplier sends three documents over two months:
+Here's a concrete scenario. A supplier sends three documents over two months:
 
 ```
 Jan 15 — Original Invoice #2024-042:      5.000,00 EUR
@@ -72,66 +72,55 @@ Jan 28 — Storno of #2024-042:            -5.000,00 EUR
 Jan 29 — New Invoice #2024-042-K1:        4.800,00 EUR  (corrected amount)
 ```
 
-The correct accounting outcome: **4.800 EUR** should appear in the books.
+The correct accounting outcome: **4.800 EUR** in the books.
 
 But if the system treats each document independently:
-- **Without chain awareness:** the export shows 5.000 + (-5.000) + 4.800 = 4.800 EUR — correct by accident, but only because the storno happened to carry a negative amount. If the storno is excluded (some systems filter negatives), the books show 9.800 EUR.
-- **With chain awareness:** the system knows #2024-042 is canceled, the storno neutralizes it, and #2024-042-K1 is the effective version. Only 4.800 EUR appears in the default accounting export. The other two documents remain accessible for audit.
+- **Without chain awareness:** the export shows 5.000 + (-5.000) + 4.800 = 4.800 EUR. Correct by accident, only because the storno happened to carry a negative amount. If the storno gets excluded (some systems filter negatives), the books show 9.800 EUR.
+- **With chain awareness:** the system knows #2024-042 is canceled, the storno neutralizes it, and #2024-042-K1 is the effective version. Only 4.800 EUR appears in the export. The other two documents stay accessible for audit.
 
-For Kanzlei offices processing hundreds of invoices per month across multiple mandants, catching these chains manually is unreliable.
+Catching these chains manually across hundreds of invoices per month is not realistic.
 
-## Effective version rules for accounting
+## Effective version rules
 
-A sound system needs clear rules for what appears in accounting exports:
+Clear rules for what shows up in accounting exports:
 
 ### Corrections
-- The **correction** is the effective version (if it's the latest in the chain and validated)
-- The **superseded original** is excluded from default accounting exports
-- Both documents remain in the system for audit purposes
+- The latest correction in the chain is the effective version (assuming it's validated)
+- Superseded originals get excluded from default accounting exports
+- Both documents stay in the system for audit
 
 ### Cancellations (Storno)
-- The **canceled original** is excluded from accounting exports
-- How the Storno document itself is handled depends on policy:
-  - **Option A (common):** exclude the Storno too — the net effect is zero, and neither document appears in the export
+- The canceled original gets excluded from exports
+- The Storno itself depends on policy:
+  - **Option A (more common):** exclude the Storno too. Net effect is zero, neither document appears
   - **Option B:** include the Storno as a separate line with a "CANCELED" status or negative amounts
 
-This must be a **configurable setting per mandant**. Different clients follow different accounting conventions, and a Kanzlei processing invoices for 30 mandants cannot enforce a single policy. Some mandants want stornos hidden entirely; others want them visible as negative entries. The system should support both without code changes.
+This has to be configurable per mandant. Different clients follow different accounting conventions, and a Kanzlei processing invoices for 30 mandants can't enforce a single policy. Some mandants want stornos hidden entirely, others want them visible as negative entries.
 
-## What Kanzlei offices need
+## What Kanzlei offices actually need
 
-Kanzlei offices processing invoices for multiple mandants have specific requirements around corrections and cancellations:
+**Visibility.** When looking at an invoice, it should be immediately clear if it's been superseded or canceled. Something like "This invoice was superseded by Correction #X on DATE" prevents staff from working on outdated documents.
 
-**Visibility** — when viewing an invoice, it must be immediately clear if it has been superseded or canceled. Banners like "This invoice was superseded by Correction #X on DATE" prevent staff from accidentally working on outdated documents.
+**Chain navigation.** Staff need to see the full chain (original, corrections, cancellations) with amounts, dates, and status at a glance. And they need to click through to any document in the chain.
 
-**Chain navigation** — staff need to see the full document chain (original, corrections, cancellations) with key fields (amounts, dates, status) at a glance, and navigate between documents.
+**Export safety.** Batch exports per mandant should automatically exclude superseded and canceled originals. Manual overrides should be restricted to admin roles and audit-logged.
 
-**Export safety** — batch exports per mandant must automatically exclude superseded and canceled originals. Manual overrides should be restricted to admin roles and audit-logged.
-
-**Unresolved references** — when a correction references an invoice number that doesn't exist in the system (maybe the original was processed before the system was adopted), this should be flagged as a warning so staff can investigate.
+**Unresolved references.** When a correction references an invoice number that doesn't exist in the system (maybe the original was processed before the system was adopted), flag it as a warning.
 
 ## Detection confidence
 
-Not all links are equally reliable. A system should track detection confidence:
+Not all links are equally reliable. Tracking confidence levels helps:
 
-- **HIGH** — structured XML reference matches an existing invoice by number and supplier
-- **MEDIUM** — heuristic match based on supplier + invoice number pattern + amounts
-- **LOW** — partial match or reference found only in free text
+- **HIGH**: structured XML reference matches an existing invoice by number and supplier
+- **MEDIUM**: heuristic match based on supplier + invoice number pattern + amounts
+- **LOW**: partial match or reference found only in free text
 
-Low-confidence links should be flagged for manual review rather than applied automatically. This is especially important in Kanzlei workflows where incorrect linking could affect a mandant's books.
+Low-confidence links should be flagged for manual review rather than applied automatically. In Kanzlei workflows, incorrect linking could affect a mandant's books.
 
 ## Audit trail
 
-Every linking decision — whether automatic or manual — must be recorded:
+Every linking decision, whether automatic or manual, needs to be recorded: who linked or unlinked the documents, when, what the previous state was, and which detection method was used. For Kanzlei offices where audit readiness is a baseline expectation, this is a core requirement.
 
-- Who linked or unlinked the documents (system or user)
-- When it happened
-- What the previous state was
-- The detection method used
+## How I approached this in RechnungRadar
 
-This is non-negotiable for Kanzlei offices where audit readiness is a core requirement.
-
-## Building this into RechnungRadar
-
-Handling corrections and cancellations reliably was one of the more nuanced features to build in [RechnungRadar](/projects/rechnungradar/). The system detects document roles from XML references, links them into chains, tracks effective versions, and ensures accounting exports only include the correct documents — with full audit trail and per-mandant policy configuration.
-
-The key design decision was making linking an **orthogonal concern** to validation: a correction invoice goes through the same parse-validate-policy pipeline as any other invoice, and the linking/chain logic operates alongside it rather than replacing it.
+Getting corrections and cancellations right was one of the trickier parts of building [RechnungRadar](/projects/rechnungradar/). The key design decision was making linking an **orthogonal concern** to validation. A correction invoice goes through the same parse-validate-policy pipeline as any other invoice. The chain logic operates alongside it, not instead of it. That way, document role detection, chain tracking, and effective version management stay cleanly separated from structural and business rule validation.
