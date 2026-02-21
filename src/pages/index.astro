@@ -10,6 +10,8 @@ import ProjectCard from "@/components/ProjectCard.astro";
 import getSortedPosts from "@/utils/getSortedPosts";
 import IconRss from "@/assets/icons/IconRss.svg";
 import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
+import { Image } from "astro:assets";
+import profileImage from "@/assets/images/profile.png";
 import { SITE } from "@/config";
 import { SOCIALS } from "@/constants";
 
@@ -41,50 +43,44 @@ const personSchema = {
   <Header />
   <main id="main-content" data-layout="index" class="app-layout">
 <section id="hero" class:list={["pt-8 pb-6", "border-b border-border"]}>
-  <h1 class="my-4 inline-block text-4xl font-bold sm:my-8 sm:text-5xl">
-    Asghar (Saeid) Kaleji
-  </h1>
-
-  <a
-    target="_blank"
-    href="/rss.xml"
-    class="inline-block"
-    aria-label="rss feed"
-    title="RSS Feed"
-  >
-    <IconRss
-      width={20}
-      height={20}
-      class="scale-125 stroke-accent stroke-3 rtl:-rotate-90"
+  <div class="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+    <Image
+      src={profileImage}
+      alt={SITE.author}
+      width={180}
+      height={180}
+      class="rounded-full shrink-0"
     />
-    <span class="sr-only">RSS Feed</span>
-  </a>
-
-  <p class="mt-3 text-lg">
-    Backend engineer focused on event-driven systems, workflow automation, and pragmatic reliability.
-  </p>
+    <div class="flex-1">
+      <p class="mt-3 text-lg sm:mt-0">
+        Backend engineer with 15+ years of experience building event-driven systems, workflow automation, and cloud-native platforms.
+      </p>
 
   <p class="mt-2">
-    I write long-form technical notes expanding on my LinkedIn posts — including architecture breakdowns,
-    failure modes, and small reference implementations. I’m also learning and writing about practical AI
-    technologies and how they fit into modern backend systems.
+    Here I write about backend architecture, failure handling, and practical design trade-offs — from distributed workflows to AI integration in real systems.
   </p>
 
-  <div class="mt-6">
-    <h2 class="text-xl font-semibold tracking-wide">Topics</h2>
-    <ul class="mt-2 list-disc ps-5">
-      <li>Distributed systems & event-driven architecture</li>
-      <li>Workflow automation, background jobs, retries</li>
-      <li>Observability and production reliability</li>
-      <li>Practical AI integration (LLMs, agent workflows) — learning in public</li>
-    </ul>
+    </div>
   </div>
 
   {
     SOCIALS.length > 0 && (
-      <div class="mt-6 flex max-sm:flex-col sm:items-center">
-        <div class="me-2 mb-1 whitespace-nowrap sm:mb-0">Social Links:</div>
+      <div class="mt-6 flex items-center">
         <Socials />
+        <a
+          target="_blank"
+          href="/rss.xml"
+          class="ms-2 inline-block"
+          aria-label="rss feed"
+          title="RSS Feed"
+        >
+          <IconRss
+            width={20}
+            height={20}
+            class="scale-125 stroke-accent stroke-3 rtl:-rotate-90"
+          />
+          <span class="sr-only">RSS Feed</span>
+        </a>
       </div>
     )
   }

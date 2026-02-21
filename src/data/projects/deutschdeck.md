@@ -2,7 +2,7 @@
 title: "DeutschDeck"
 description: "Offline-first German spaced repetition app (Web PWA + iPhone) with German-specific card templates, built-in scheduling, and optional cross-device sync."
 pubDatetime: 2026-02-17T00:00:00Z
-draft: false
+draft: true
 techStack:
   - "Next.js (PWA)"
   - "TypeScript"
