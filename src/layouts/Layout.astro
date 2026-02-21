@@ -17,6 +17,7 @@ type Props = {
   scrollSmooth?: boolean;
   structuredData?: Record<string, unknown>;
   keywords?: string[];
+  descriptionDe?: string;
 };
 
 const {
@@ -31,6 +32,7 @@ const {
   scrollSmooth = false,
   structuredData: structuredDataOverride,
   keywords = [],
+  descriptionDe,
 } = Astro.props;
 
 const socialImageURL = new URL(ogImage, Astro.url);
@@ -88,6 +90,9 @@ const structuredData = structuredDataOverride ?? defaultStructuredData;
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:image" content={socialImageURL} />
+    <meta property="og:locale" content="en_US" />
+    {descriptionDe && <meta property="og:locale:alternate" content="de_DE" />}
+    {descriptionDe && <meta name="description" lang="de" content={descriptionDe} />}
 
     <!-- Article Published/Modified time -->
     {

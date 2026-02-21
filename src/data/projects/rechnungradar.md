@@ -1,6 +1,7 @@
 ---
 title: "RechnungRadar"
 description: "Pre-validation & compliance checks for structured e-invoices (XRechnung/ZUGFeRD), designed to reduce manual clarification loops in Kanzlei and SME workflows."
+descriptionDe: "Vorvalidierung & Compliance-Prüfung für E-Rechnungen (XRechnung/ZUGFeRD). Erkennt fehlende Pflichtfelder, Vertragsabweichungen und IBAN-Änderungen — bevor die Rechnung ins ERP geht. Für Kanzleien und Mittelstand."
 pubDatetime: 2026-01-20T00:00:00Z
 draft: false
 techStack:
@@ -24,6 +25,18 @@ keywords:
   - "invoice pre-validation"
   - "Kanzlei invoice automation"
   - "structured invoice validation"
+  - "XRechnung Prüfung"
+  - "ZUGFeRD Validierung"
+  - "E-Rechnung prüfen"
+  - "Rechnungsprüfung automatisieren"
+  - "XRechnung Pflichtfelder prüfen"
+  - "E-Rechnung Vorvalidierung"
+  - "Kanzlei Rechnungseingang"
+  - "Eingangsrechnungen prüfen"
+  - "DATEV Vorprüfung"
+  - "Rechnungskontrolle Mittelstand"
+  - "Buchhaltung Automatisierung"
+  - "Storno Rechnung Verkettung"
 ---
 
 RechnungRadar is a pre-validation gateway for inbound German e-invoices (XRechnung and ZUGFeRD).

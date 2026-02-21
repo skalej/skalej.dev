@@ -31,6 +31,7 @@ const projects = defineCollection({
     z.object({
       title: z.string(),
       description: z.string(),
+      descriptionDe: z.string().optional(),
       pubDatetime: z.date(),
       techStack: z.array(z.string()).default([]),
       liveUrl: z.string().optional(),

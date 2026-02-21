@@ -12,7 +12,7 @@ type Props = {
 };
 
 const { project } = Astro.props;
-const { title, description, techStack, liveUrl, githubUrl, pubDatetime, image, logo, keywords } =
+const { title, description, descriptionDe, techStack, liveUrl, githubUrl, pubDatetime, image, logo, keywords } =
   project.data;
 
 const { Content } = await render(project);
@@ -49,6 +49,7 @@ const ogImageUrl = SITE.dynamicOgImage
 const layoutProps = {
   title: `${title} | ${SITE.title}`,
   description,
+  descriptionDe,
   pubDatetime,
   scrollSmooth: true,
   structuredData,
