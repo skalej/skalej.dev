@@ -1,6 +1,7 @@
 ---
 layout: ../layouts/AboutLayout.astro
 title: "About"
+description: "Saeid Kaleji — backend engineer with 15+ years of experience building event-driven systems, workflow automation, and cloud-native platforms across finance and e-commerce."
 ---
 
 I design and deliver event-driven backend systems that automate complex operational workflows at scale.

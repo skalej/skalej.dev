@@ -1,7 +1,7 @@
 export const SITE = {
-  website: "https://skalej.dev/",
+  website: "https://kaleji.dev/",
   author: "Saeid Kaleji",
-  profile: "https://skalej.dev/about/",
+  profile: "https://kaleji.dev/about/",
   desc: "Software engineer based in Germany. Building tools for e-invoicing, language learning, and developer productivity.",
   title: "Saeid Kaleji",
   ogImage: "astropaper-og.jpg",

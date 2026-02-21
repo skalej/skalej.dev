@@ -42,6 +42,10 @@ const structuredData: Record<string, unknown> = {
   }),
 };
 
+const ogImageUrl = SITE.dynamicOgImage
+  ? `/projects/${project.id}/index.png`
+  : undefined;
+
 const layoutProps = {
   title: `${title} | ${SITE.title}`,
   description,
@@ -49,6 +53,7 @@ const layoutProps = {
   scrollSmooth: true,
   structuredData,
   keywords,
+  ...(ogImageUrl && { ogImage: ogImageUrl }),
 };
 ---
 
