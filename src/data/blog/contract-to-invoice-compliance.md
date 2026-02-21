@@ -31,11 +31,23 @@ This happens far more often than most teams realize, especially with:
 
 ## What contract compliance checks cover
 
-Contract compliance is a distinct validation layer that sits alongside (not inside) e-invoice validation and buyer policy checks. In the invoice detail view, results appear in three separate sections:
+Contract compliance is a distinct validation layer that sits alongside (not inside) e-invoice validation and buyer policy checks. Each incoming invoice passes through a funnel of increasingly specific checks:
 
-1. **E-Invoice / EN16931 Validation** — structural and arithmetic checks
-2. **Buyer Policy** — organizational requirements (PO, buyer reference, cost center)
-3. **Contract Compliance** — commercial terms alignment
+```
+  ┌─────────────────────────────────────┐
+  │  E-Invoice / EN16931 Validation     │  ← Is it structurally valid?
+  └──────────────┬──────────────────────┘
+                 ▼
+  ┌─────────────────────────────────────┐
+  │  Buyer Policy                       │  ← Does it meet org requirements?
+  └──────────────┬──────────────────────┘
+                 ▼
+  ┌─────────────────────────────────────┐
+  │  Contract Compliance                │  ← Does it match agreed terms?
+  └─────────────────────────────────────┘
+```
+
+Each layer catches a different category of problems. An invoice can pass one layer and fail the next. In the invoice detail view, results appear in three separate sections so users can see exactly where issues are.
 
 The contract compliance rules I implemented in RechnungRadar's V1:
 
@@ -120,4 +132,6 @@ Together, the three layers form a funnel: structural validity, then organization
 
 ## The ROI for Kanzlei offices
 
-For a Kanzlei processing invoices across many mandants, contract compliance checks are high-leverage. A single caught payment-term mismatch or recurring-fee anomaly can save hours of follow-up time. Multiply that across dozens of mandants and hundreds of invoices per month, and the cumulative impact is significant — especially when the alternative is catching these issues during a quarterly review, or not at all.
+For a Kanzlei processing invoices across many mandants, contract compliance checks are high-leverage. Industry data suggests that in subscription-heavy portfolios, recurring amount anomalies (silent price increases, changed billing cycles, duplicate charges) affect roughly 3–7% of invoices — costs that go unnoticed without systematic checks.
+
+A single caught payment-term mismatch or recurring-fee anomaly can save hours of follow-up time. Multiply that across dozens of mandants and hundreds of invoices per month, and the cumulative impact is significant — especially when the alternative is catching these issues during a quarterly review, or not at all.

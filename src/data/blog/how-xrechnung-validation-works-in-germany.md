@@ -60,7 +60,7 @@ These are not XRechnung schema errors. They're operational readiness problems th
 
 ## Common validation errors in practice
 
-After processing thousands of invoices, certain patterns appear repeatedly:
+Based on the XRechnung specification and common ERP output patterns, certain errors appear repeatedly across invoice samples:
 
 | Error | Frequency | Impact |
 |-------|-----------|--------|
@@ -71,6 +71,20 @@ After processing thousands of invoices, certain patterns appear repeatedly:
 | Wrong currency code format | Rare | Parse failure |
 
 The high-frequency errors are almost never caught by schema validation. They require field-level and policy-level checks.
+
+## What public validators don't check
+
+Germany provides public validation tools (like the KoSIT validator) that check XRechnung conformance against the official schematron rules. These are useful — they catch structural and schema-level issues reliably.
+
+But public validators stop at technical conformance. They answer "is this a valid XRechnung?" — not "is this invoice ready for our accounting workflow?" The gap between the two is where most operational problems live:
+
+- **Buyer references and PO numbers** — public validators don't know your organization's policies. A missing Leitweg-ID or internal reference number won't trigger a finding in schema validation, but it will block processing in your accounting system.
+- **Vendor identity** — is this supplier in your vendor master? Has their IBAN changed since the last invoice? Schema validation has no concept of vendor matching or identity risk.
+- **Contract terms** — does the invoiced amount match the agreed recurring fee? Are the payment terms consistent with the contract? This is entirely outside the scope of e-invoice standards.
+- **Correction and storno chains** — if a correction invoice supersedes an original, the public validator treats both as independent valid documents. It won't tell you that the original should no longer appear in your books.
+- **Cross-invoice context** — has this exact invoice been uploaded before? Is the same setup fee being charged a second time? Schema validation sees each invoice in isolation.
+
+For a Kanzlei processing invoices for dozens of mandants, each with their own policies, vendor relationships, and contracts, the gap between "schema-valid" and "process-ready" is where the real work happens.
 
 ## Why deterministic validation matters
 

@@ -27,19 +27,17 @@ Every e-invoice document falls into one of three roles:
 
 The supplier issues corrections and cancellations. The receiving side (your Kanzlei or AP team) needs to detect the role, link it to the right original, and ensure accounting exports reflect the correct effective amounts.
 
-## How corrections and cancellations appear in XRechnung
+## How corrections and cancellations are detected
 
-Both UBL and CII provide structured reference fields to indicate that a document relates to an earlier invoice.
-
-In **UBL**, a correction invoice may include a `BillingReference` element pointing to the original invoice number. The `InvoiceTypeCode` can also indicate a credit note (code `381`) versus a standard invoice (code `380`).
-
-In **CII**, the equivalent mechanism uses `InvoiceReferencedDocument` within the header, referencing the original invoice number and optionally the issue date.
+Both XRechnung syntaxes (UBL and CII) provide structured reference fields to indicate that a document relates to an earlier invoice — typically a reference to the original invoice number and a document type code that distinguishes standard invoices from credit notes.
 
 In practice, these references are not always present or complete. Some ERP systems omit them. Some suppliers include a reference in free-text notes instead of structured fields. This means detection needs a fallback strategy:
 
 1. **Structured reference** in the XML (highest confidence)
 2. **Heuristic matching** — same supplier + referenced invoice number in text + matching amounts
 3. **Manual linking** — a user selects the original invoice when automatic detection fails
+
+How this is handled should be configurable per mandant — some clients want strict automatic linking, others prefer to review every link manually. The key is that the system supports both approaches and makes the detection method transparent.
 
 ## Document chains
 
@@ -66,12 +64,21 @@ The critical concept is the **effective version**: at any point, only one docume
 
 If corrections and originals are both included in an accounting export without chain awareness, amounts get counted twice. This is the most common operational error.
 
-Consider a simple example:
+Consider a concrete scenario. A supplier sends three documents over two months:
 
-- Original invoice: 10,000 EUR (net)
-- Correction invoice: 9,500 EUR (net) — corrects a pricing error
+```
+Jan 15 — Original Invoice #2024-042:      5.000,00 EUR
+Jan 28 — Storno of #2024-042:            -5.000,00 EUR
+Jan 29 — New Invoice #2024-042-K1:        4.800,00 EUR  (corrected amount)
+```
 
-If both appear in the monthly DATEV export, the books show 19,500 EUR instead of 9,500 EUR. For Kanzlei offices processing hundreds of invoices per month across multiple mandants, catching these manually is unreliable.
+The correct accounting outcome: **4.800 EUR** should appear in the books.
+
+But if the system treats each document independently:
+- **Without chain awareness:** the export shows 5.000 + (-5.000) + 4.800 = 4.800 EUR — correct by accident, but only because the storno happened to carry a negative amount. If the storno is excluded (some systems filter negatives), the books show 9.800 EUR.
+- **With chain awareness:** the system knows #2024-042 is canceled, the storno neutralizes it, and #2024-042-K1 is the effective version. Only 4.800 EUR appears in the default accounting export. The other two documents remain accessible for audit.
+
+For Kanzlei offices processing hundreds of invoices per month across multiple mandants, catching these chains manually is unreliable.
 
 ## Effective version rules for accounting
 
@@ -88,7 +95,7 @@ A sound system needs clear rules for what appears in accounting exports:
   - **Option A (common):** exclude the Storno too — the net effect is zero, and neither document appears in the export
   - **Option B:** include the Storno as a separate line with a "CANCELED" status or negative amounts
 
-For Kanzlei workflows, this should be a configurable setting per mandant, since different clients may follow different accounting conventions.
+This must be a **configurable setting per mandant**. Different clients follow different accounting conventions, and a Kanzlei processing invoices for 30 mandants cannot enforce a single policy. Some mandants want stornos hidden entirely; others want them visible as negative entries. The system should support both without code changes.
 
 ## What Kanzlei offices need
 

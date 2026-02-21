@@ -1,131 +1,137 @@
 ---
-title: "Building a Deterministic Invoice Validation Pipeline in Kotlin"
-description: "How I designed a deterministic, versioned validation pipeline for e-invoices using Kotlin and Spring Boot — covering rule versioning, idempotent processing, async job queues, and audit requirements."
+title: "Designing for Determinism in Async Processing Pipelines"
+description: "Patterns for building async pipelines where the same input must always produce the same output — versioning, idempotency, and immutable evaluations in compliance-sensitive systems."
 pubDatetime: 2026-02-06T00:00:00Z
 draft: false
 tags:
-  - "kotlin"
-  - "spring-boot"
   - "architecture"
-  - "validation"
-  - "e-invoicing"
+  - "async-processing"
+  - "determinism"
+  - "kotlin"
+  - "backend-engineering"
 ---
 
-When I started building the validation engine for [RechnungRadar](/projects/rechnungradar/), the core requirement was deceptively simple: given an e-invoice, produce a list of findings. But in a system used by Kanzlei offices for audit-sensitive accounting workflows, "produce findings" comes with hard constraints — determinism, versioning, idempotency, and auditability.
+Some systems must guarantee that the same input always produces the same output. Not as a best-effort property, but as a hard requirement — because auditors will ask, because regulators will check, because your users need to trust that re-running something won't silently change the answer.
 
-This post covers the key architectural decisions behind the validation pipeline.
+Financial validation, compliance checks, medical data processing, insurance claim evaluation — any domain where results feed into audit trails or legal records has this constraint.
+
+I ran into this while building [RechnungRadar](/projects/rechnungradar/), an e-invoice validation system for German accounting workflows. This post covers the patterns I found most useful for achieving determinism in async processing pipelines, and the subtle ways it breaks if you're not deliberate about it.
 
 ## Table of contents
 
-## Why determinism matters
+## What breaks determinism
 
-A validation system for accounting must guarantee: **same input + same rules = same findings, every time.** This isn't just a nice-to-have. Kanzlei offices need it because:
+Determinism sounds simple — same input, same output. But in a real async pipeline, several things conspire against it:
 
-- Audit trails must be reproducible. If an auditor asks "why was this invoice flagged?", the answer must be consistent with what the system showed at the time.
-- Re-processing invoices after rule changes must produce explainably different results, not random variation.
-- Batch operations across hundreds of mandants must behave consistently.
+**Mutable configuration.** Your validation rules reference tenant settings (e.g., "is a purchase order required?"). If that setting changes between two runs of the same input, the output changes. The input didn't change — the context did.
 
-This rules out anything non-deterministic in the validation path: no random sampling, no ML-based scoring without pinned versions, no reliance on external services that might return different results on retry.
+**Evolving logic.** You ship a bug fix to a parsing function. Now re-processing an old document produces slightly different extracted data, which produces different validation results. Was the old result wrong? Probably. But the user who exported a report last week sees different findings today, and that's a trust problem.
 
-## Rule packs and versioning
+This is easy to overlook. Imagine a parser fix that changes how a date field is extracted from certain CII invoices. Correct fix — but now re-processing historical invoices produces slightly different findings. Anyone who already exported a report based on the old evaluation sees a discrepancy they can't explain. The fix itself was right. What's missing is version-pinning the parser, so you can explain: "the old result used parser v1, the new result uses parser v2, here's what changed."
 
-Each validation rule is a Kotlin class that implements a common interface:
+**External dependencies.** A rule calls an external service to verify a VAT ID. The service returns a different response today than it did yesterday (network error, updated data, rate limit). Your output is now non-deterministic through no fault of your own.
+
+**Non-deterministic ordering.** You process items concurrently and aggregate results. If the aggregation depends on processing order (e.g., "first match wins"), and the order varies across runs, the output varies too.
+
+**Time-dependent logic.** A rule says "warn if the invoice is older than 90 days." Run it today: no warning. Run it tomorrow: warning. Same input, different output — because "now" is an implicit input you didn't pin.
+
+## Pattern 1: Pin everything at evaluation time
+
+The core idea: when you evaluate an input, capture a snapshot of everything that could affect the output. Store these snapshots alongside the result.
+
+In practice, this means recording:
+
+- **Which version of the rules ran.** Not "the current version" — the specific version identifier that was active at evaluation time.
+- **What the configuration looked like.** A hash or snapshot of the tenant/org settings that rules reference.
+- **Which version of the extraction/parsing logic ran.** If your parser changes how it reads a field, that affects downstream results.
+
+Conceptually, every evaluation carries a context like this:
 
 ```kotlin
-interface ValidationRule {
-    val code: String        // e.g., "RR-TOT-001"
-    val category: RuleCategory
-    val severity: Severity
-
-    fun evaluate(invoice: NormalizedInvoice, context: ValidationContext): RuleResult
-}
+data class EvaluationContext(
+    val inputHash: String,           // SHA-256 of the original document
+    val rulesetVersion: String,      // e.g., "0.3"
+    val configHash: String,          // hash of tenant settings at eval time
+    val parserVersion: String,       // extraction logic version
+    val evaluationTimestamp: Instant  // pinned, not "now"
+)
 ```
 
-Rules are grouped into **rule packs** with a version string (e.g., `"0.2"`). When an invoice is uploaded, the current rule pack version is pinned to that invoice. If rules change later, the invoice retains its original evaluation — unless explicitly re-processed with the new version.
+These pins serve two purposes:
+1. **Reproducibility** — given the pins, you can explain exactly why a result looks the way it does.
+2. **Comparison** — when you re-process with new rules, you can diff the old and new results and show users exactly what changed and why.
 
-This versioning is stored per invoice:
+The alternative — re-running without pins and hoping for the same result — fails as soon as any of the inputs you forgot to pin changes underneath you.
 
-- `ruleset_version` — which rule pack was applied
-- `config_hash` — a hash of the organization's settings at evaluation time (e.g., whether buyer reference is required)
-- `extractor_version` — which parsing/extraction logic version was used
+## Pattern 2: Immutable evaluations
 
-Together, these three values make any evaluation fully reproducible.
+When you re-process an input (because rules changed, a bug was fixed, or configuration was updated), don't overwrite the previous evaluation. Create a new one.
 
-## The processing pipeline
+This sounds wasteful, but it solves several problems at once:
 
-Every invoice goes through the same stages:
+- **Audit trail.** Auditors can see what the system said at any point in time.
+- **Safe rollback.** If the new rules produce worse results, you still have the old evaluation.
+- **Diffing.** Users can compare evaluations and see "rule X was added, finding Y is new."
+- **No lost evidence.** If someone exported a report based on evaluation v1, that report remains explainable even after evaluation v2 exists.
 
-```
-Upload → Store → Queue → Parse → Normalize → Validate → Policy Check → Done
-```
+The "current" evaluation is a pointer, not a mutation. You update which evaluation is active, but you never delete or modify past ones.
 
-Each stage is a distinct step with clear inputs and outputs:
+## Pattern 3: Make jobs idempotent
 
-1. **Upload & store** — the file is persisted to object storage with a content-hash based dedup check. If the same file (by SHA-256) has already been uploaded for this organization, the upload is rejected as a duplicate.
+In any async pipeline, jobs will be retried — because workers crash, networks fail, timeouts trigger. If retrying a job produces a different result or creates duplicate records, you have a problem.
 
-2. **Queue** — a processing job is created in a durable job queue (PostgreSQL table). Jobs use `FOR UPDATE SKIP LOCKED` for concurrent worker safety.
+Idempotency in processing pipelines requires attention at two levels:
 
-3. **Parse** — the file is classified (UBL XML, CII XML, or ZUGFeRD PDF) and parsed using streaming StAX parsing. ZUGFeRD PDFs have their embedded XML extracted first via PDFBox.
+**Job-level idempotency.** The same job running twice must not create duplicate work. This means either deduplicating by a natural key before writing results, or using "insert if not exists" semantics.
 
-4. **Normalize** — both UBL and CII produce a common `NormalizedInvoice` model. This is the single data structure that all downstream rules operate on. Having one normalized model means rules don't need format-specific logic.
+**Outcome-level idempotency.** The same input processed with the same pinned versions must produce byte-for-byte identical results. This rules out things like timestamps in the output ("evaluated_at" should be the job's timestamp, not `now()`), random IDs in findings, or order-dependent serialization.
 
-5. **Validate** — the rule pack runs against the normalized invoice. Each rule produces a `RuleResult` with a code, severity, message, evidence, and optional suggested fix.
+A useful test: run your pipeline twice on the same input with the same version pins, serialize both outputs, and diff them. If the diff is non-empty, you have a determinism leak.
 
-6. **Policy check** — organization-specific rules (buyer reference required, PO required, contract compliance) run as a separate pass. These are configurable per tenant or mandant and versioned independently.
+## Pattern 4: Isolate side effects from evaluation
 
-## Idempotent job processing
+Keep the evaluation function pure: it takes an input and a context (rules, config), and returns results. No database writes, no external calls, no state mutations inside the evaluation.
 
-The worker runtime polls the `processing_jobs` table for queued jobs. Several things make this safe for concurrent and retry scenarios:
+Side effects (storing results, updating status, sending notifications) happen in a wrapper around the evaluation, not inside it. This means:
 
-**Lock-based dedup** — `SELECT ... FOR UPDATE SKIP LOCKED` ensures two workers never process the same job simultaneously. If a worker crashes mid-processing, the lock times out after 2 minutes and the job becomes available again.
+- You can unit-test evaluations without a database
+- You can re-run evaluations in dry-run mode
+- The evaluation logic is the same whether called from a job worker, an API endpoint, or a test
 
-**Retry with backoff** — failed jobs are re-queued with exponential backoff (1s base, 2x multiplier, 30s max). After 3 attempts, a job moves to `DEAD` status and requires manual intervention.
+This isn't always achievable — some rules genuinely need to query historical data (e.g., "has this vendor sent this amount before?"). But even then, the query results should be captured as part of the evaluation context (snapshotted), not re-queried on each retry.
 
-**Idempotent outcomes** — re-processing the same invoice with the same rule version produces the same findings. Findings are stored as a set keyed by `(invoice_id, rule_code, ruleset_version)`, so re-running doesn't create duplicates.
+## Pattern 5: Treat "now" as an input
 
-**Graceful shutdown** — when the worker receives a shutdown signal, it releases held locks before stopping. This prevents jobs from being stuck in a locked state until the timeout expires.
+Any rule that references the current time is an implicit source of non-determinism. "Warn if older than 90 days" will produce different results on different days.
 
-## Separating API and worker runtimes
+The fix: pass the evaluation timestamp as an explicit parameter. Pin it when the job is created, not when the job runs. If a job is retried three hours later, it still uses the original timestamp.
 
-The system runs as two logical processes from the same codebase:
+This also makes time-dependent rules testable — you can pass any timestamp and assert against it, without mocking system clocks.
 
-- **API runtime** — handles HTTP requests (upload, query, export). No job polling.
-- **Worker runtime** — polls for jobs and runs the processing pipeline. No external HTTP serving.
+## The costs are real
 
-This separation matters for a few reasons:
+These patterns aren't free. You should know what you're signing up for:
 
-- Upload spikes don't compete with processing for resources
-- Workers can be scaled independently
-- A slow validation run doesn't block API response times
-- Each runtime can be health-checked independently (API checks DB connectivity; worker checks job processing lag)
+**Storage growth.** Immutable evaluations mean you're keeping every version. For a system processing thousands of documents per month, evaluation history grows fast. You'll need a retention policy and a strategy for archiving old evaluations without losing audit access.
 
-Both runtimes share the same domain code and database, just with different Spring profiles activating different components.
+**Schema complexity.** Version columns, hash columns, evaluation snapshots, pointer tables for "current evaluation" — the data model gets more complex. Migrations need discipline, and every new feature must respect the versioning contract.
 
-## Evidence and redaction
+**Migration discipline.** When you add a new version pin (say, a new config parameter that affects outcomes), you need to backfill or default it for existing evaluations. This is manageable but requires awareness — you can't just add a column and ignore history.
 
-Every finding includes **evidence** — the specific values that triggered the rule. For example, a VAT mismatch finding includes the declared total and the computed sum. This makes findings actionable without requiring the user to dig into raw XML.
+**Cognitive overhead.** Developers must understand that evaluation is not "run the rules and save the result." It's "capture context, run the rules, store the result alongside the context, never mutate." This takes onboarding and code review discipline.
 
-But evidence must be redacted carefully. Invoice data can contain sensitive information (addresses, line item descriptions, free-text notes). The policy:
+## When determinism isn't worth the cost
 
-- Evidence is capped at 512 characters
-- Only numeric values, dates, and identifiers are included (invoice number, buyer reference, PO number)
-- No addresses, line item descriptions, or free-text notes in evidence
-- No full XML fragments stored
+Not every pipeline needs this. If your results are ephemeral (a live search ranking, a recommendation feed), the cost of versioning and pinning outweighs the benefit.
 
-This keeps the audit trail informative without creating a data-sensitivity liability.
+But if your results are:
+- Stored and referenced later
+- Used in reports that get exported
+- Subject to audit
+- Shown to users who expect stability
 
-## Re-processing
+Then determinism isn't optional. It's a prerequisite for trust.
 
-When rules change, affected invoices can be re-processed. Re-processing creates a **new evaluation snapshot** — it never mutates the existing one. This means:
+The patterns above add complexity, but they eliminate an entire class of problems — the kind where someone asks "this showed something different yesterday" and you have no way to explain why.
 
-- The original evaluation remains accessible for audit
-- The new evaluation references the new `ruleset_version`
-- A diff between evaluations shows exactly what changed and why
-
-Re-processing can be triggered manually (for specific invoices) or in batch (for all invoices in a mandant when a policy changes).
-
-## What I'd do differently
-
-The main thing I'd reconsider is the polling interval for the worker. At 1000ms with a batch size of 10, there's an inherent latency floor of up to 1 second between upload and processing start. For most accounting workflows this is fine, but if near-real-time feedback matters, an event-driven trigger (Spring events or a lightweight message broker) on top of the durable queue would reduce that latency without sacrificing reliability.
-
-The overall architecture — versioned rules, normalized model, idempotent processing, separated runtimes — has held up well as the system grew from basic validation to contract compliance and correction/storno chain handling.
+The investment pays off the first time an auditor asks for a historical finding and you can produce it exactly as it was, with full provenance.
