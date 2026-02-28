@@ -116,9 +116,7 @@ export default async project => {
       width: 1200,
       height: 630,
       embedFont: true,
-      fonts: await loadGoogleFonts(
-        project.data.title + SITE.title + "Project"
-      ),
+      fonts: await loadGoogleFonts(project.data.title + SITE.title + "Project"),
     }
   );
 };

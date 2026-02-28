@@ -41,7 +41,7 @@ keywords:
 
 RechnungRadar is a pre-validation gateway for inbound German e-invoices (XRechnung and ZUGFeRD).
 
-It closes **the gap between *technical validity* and *operational readiness*** by checking whether an invoice that passes XML/schema validation is actually process-ready for accounting systems.
+It closes **the gap between _technical validity_ and _operational readiness_** by checking whether an invoice that passes XML/schema validation is actually process-ready for accounting systems.
 
 ## What it does
 
@@ -103,4 +103,3 @@ Yes. RechnungRadar detects correction and storno documents, links them to origin
 ### Is it suitable for Kanzlei workflows with multiple clients?
 
 Yes. RechnungRadar supports multi-mandant setups where each mandant has isolated vendor masters, buyer policies, and contract configurations. Kanzlei staff can process invoices across mandants with batch operations and per-mandant exports.
-

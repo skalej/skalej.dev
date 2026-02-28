@@ -42,54 +42,55 @@ const personSchema = {
 <Layout structuredData={personSchema}>
   <Header />
   <main id="main-content" data-layout="index" class="app-layout">
-<section id="hero" class:list={["pt-8 pb-6", "border-b border-border"]}>
-  <div class="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-    <Image
-      src={profileImage}
-      alt={SITE.author}
-      width={180}
-      height={180}
-      class="rounded-full shrink-0"
-    />
-    <div class="flex-1">
-      <p class="mt-3 text-lg sm:mt-0">
-        Backend engineer with 15+ years of experience building event-driven systems, workflow automation, and cloud-native platforms.
-      </p>
+    <section id="hero" class:list={["pt-8 pb-6", "border-b border-border"]}>
+      <div class="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+        <Image
+          src={profileImage}
+          alt={SITE.author}
+          width={180}
+          height={180}
+          class="shrink-0 rounded-full"
+        />
+        <div class="flex-1">
+          <p class="mt-3 text-lg sm:mt-0">
+            Backend engineer with 15+ years of experience building event-driven
+            systems, workflow automation, and cloud-native platforms.
+          </p>
 
-  <p class="mt-2">
-    Here I write about backend architecture, failure handling, and practical design trade-offs — from distributed workflows to AI integration in real systems.
-  </p>
-
-    </div>
-  </div>
-
-  {
-    SOCIALS.length > 0 && (
-      <div class="mt-6 flex items-center">
-        <Socials />
-        <a
-          target="_blank"
-          href="/rss.xml"
-          class="ms-2 inline-block"
-          aria-label="rss feed"
-          title="RSS Feed"
-        >
-          <IconRss
-            width={20}
-            height={20}
-            class="scale-125 stroke-accent stroke-3 rtl:-rotate-90"
-          />
-          <span class="sr-only">RSS Feed</span>
-        </a>
+          <p class="mt-2">
+            Here I write about backend architecture, failure handling, and
+            practical design trade-offs — from distributed workflows to AI
+            integration in real systems.
+          </p>
+        </div>
       </div>
-    )
-  }
-</section>
 
+      {
+        SOCIALS.length > 0 && (
+          <div class="mt-6 flex items-center">
+            <Socials />
+            <a
+              target="_blank"
+              href="/rss.xml"
+              class="ms-2 inline-block"
+              aria-label="rss feed"
+              title="RSS Feed"
+            >
+              <IconRss
+                width={20}
+                height={20}
+                class="scale-125 stroke-accent stroke-3 rtl:-rotate-90"
+              />
+              <span class="sr-only">RSS Feed</span>
+            </a>
+          </div>
+        )
+      }
+    </section>
 
     {
       sortedProjects.length > 0 && (
-        <section id="projects" class="pt-12 pb-6 border-b border-border">
+        <section id="projects" class="border-b border-border pt-12 pb-6">
           <h2 class="text-2xl font-semibold tracking-wide">Projects</h2>
           <ul>
             {sortedProjects.map(project => (

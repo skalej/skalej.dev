@@ -81,7 +81,11 @@ const structuredData = structuredDataOverride ?? defaultStructuredData;
     <meta name="description" content={description} />
     <meta name="author" content={author} />
     <meta name="robots" content="index, follow" />
-    {keywords.length > 0 && <meta name="keywords" content={keywords.join(", ")} />}
+    {
+      keywords.length > 0 && (
+        <meta name="keywords" content={keywords.join(", ")} />
+      )
+    }
     <link rel="sitemap" href="/sitemap-index.xml" />
 
     <!-- Open Graph / Facebook -->
@@ -92,7 +96,11 @@ const structuredData = structuredDataOverride ?? defaultStructuredData;
     <meta property="og:image" content={socialImageURL} />
     <meta property="og:locale" content="en_US" />
     {descriptionDe && <meta property="og:locale:alternate" content="de_DE" />}
-    {descriptionDe && <meta name="description" lang="de" content={descriptionDe} />}
+    {
+      descriptionDe && (
+        <meta name="description" lang="de" content={descriptionDe} />
+      )
+    }
 
     <!-- Article Published/Modified time -->
     {

@@ -173,10 +173,10 @@ And: can I implement this in a hundred lines of Python before adding a framework
 
 ## Summary
 
-| Pattern | Mental model | Use when | Watch out for |
-|---|---|---|---|
-| Prompt Chaining | Assembly line | Sequential stages, each needs focus | Errors compound across steps |
-| Routing | Switchboard | Diverse inputs, specialist handling | Router is a single point of failure |
-| Parallelization | Parallel team | Independent tasks, speed or reliability | Partial failure handling |
-| Orchestrator-Worker | PM + team | Open-ended tasks, dynamic planning | Infinite loops, runaway costs |
+| Pattern             | Mental model    | Use when                                      | Watch out for                           |
+| ------------------- | --------------- | --------------------------------------------- | --------------------------------------- |
+| Prompt Chaining     | Assembly line   | Sequential stages, each needs focus           | Errors compound across steps            |
+| Routing             | Switchboard     | Diverse inputs, specialist handling           | Router is a single point of failure     |
+| Parallelization     | Parallel team   | Independent tasks, speed or reliability       | Partial failure handling                |
+| Orchestrator-Worker | PM + team       | Open-ended tasks, dynamic planning            | Infinite loops, runaway costs           |
 | Evaluator-Optimizer | Writer + editor | Clear quality criteria, iterative improvement | Weak evaluator approves mediocre output |
