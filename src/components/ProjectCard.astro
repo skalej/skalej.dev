@@ -4,7 +4,7 @@ import type { CollectionEntry } from "astro:content";
 type Props = CollectionEntry<"projects">;
 
 const { id, data } = Astro.props;
-const { title, description, techStack, liveUrl, githubUrl } = data;
+const { title, description, techStack, githubUrl } = data;
 const href = `/projects/${id}/`;
 ---
 
