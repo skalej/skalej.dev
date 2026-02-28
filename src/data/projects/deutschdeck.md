@@ -50,7 +50,7 @@ Generic flashcard tools force German learners to manually manage grammar-bound a
 
 DeutschDeck reduces setup cost and cognitive load by:
 
-- Providing the *right fields by default*
+- Providing the _right fields by default_
 - Optimizing drills for common German pain points
 - Ensuring reliable scheduling behavior across devices
 - Allowing users to stay productive without mandatory accounts

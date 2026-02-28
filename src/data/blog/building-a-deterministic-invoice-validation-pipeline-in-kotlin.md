@@ -58,6 +58,7 @@ data class EvaluationContext(
 ```
 
 These pins do two things:
+
 1. **Reproducibility.** Given the pins, you can explain exactly why a result looks the way it does.
 2. **Comparison.** When you re-process with new rules, you can diff the old and new results and show users exactly what changed.
 

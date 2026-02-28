@@ -75,6 +75,7 @@ Jan 29 — New Invoice #2024-042-K1:        4.800,00 EUR  (corrected amount)
 The correct accounting outcome: **4.800 EUR** in the books.
 
 But if the system treats each document independently:
+
 - **Without chain awareness:** the export shows 5.000 + (-5.000) + 4.800 = 4.800 EUR. Correct by accident, only because the storno happened to carry a negative amount. If the storno gets excluded (some systems filter negatives), the books show 9.800 EUR.
 - **With chain awareness:** the system knows #2024-042 is canceled, the storno neutralizes it, and #2024-042-K1 is the effective version. Only 4.800 EUR appears in the export. The other two documents stay accessible for audit.
 
@@ -85,11 +86,13 @@ Catching these chains manually across hundreds of invoices per month is not real
 Clear rules for what shows up in accounting exports:
 
 ### Corrections
+
 - The latest correction in the chain is the effective version (assuming it's validated)
 - Superseded originals get excluded from default accounting exports
 - Both documents stay in the system for audit
 
 ### Cancellations (Storno)
+
 - The canceled original gets excluded from exports
 - The Storno itself depends on policy:
   - **Option A (more common):** exclude the Storno too. Net effect is zero, neither document appears

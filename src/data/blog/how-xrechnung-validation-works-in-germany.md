@@ -62,13 +62,13 @@ These aren't XRechnung schema errors. They're operational readiness problems tha
 
 Based on the XRechnung specification and common ERP output patterns, certain errors appear over and over:
 
-| Error | Frequency | Impact |
-|-------|-----------|--------|
-| Missing buyer reference | Very common | Blocks public-sector processing entirely |
-| VAT breakdown sum mismatch | Common | Accounting system rejects the invoice |
-| Missing supplier VAT ID | Occasional | Cannot match to vendor master |
-| Due date before issue date | Occasional | Data quality flag |
-| Wrong currency code format | Rare | Parse failure |
+| Error                      | Frequency   | Impact                                   |
+| -------------------------- | ----------- | ---------------------------------------- |
+| Missing buyer reference    | Very common | Blocks public-sector processing entirely |
+| VAT breakdown sum mismatch | Common      | Accounting system rejects the invoice    |
+| Missing supplier VAT ID    | Occasional  | Cannot match to vendor master            |
+| Due date before issue date | Occasional  | Data quality flag                        |
+| Wrong currency code format | Rare        | Parse failure                            |
 
 The high-frequency errors are almost never caught by schema validation. They need field-level and policy-level checks.
 

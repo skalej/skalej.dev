@@ -24,6 +24,7 @@ Picture a Kanzlei processing invoices for 30 mandants. One mandant has a SaaS co
 But the amount is 15% higher than agreed, and the payment terms were shortened by half. Without contract context, the accounting system books it without question. The mandant pays the wrong amount on the wrong schedule, and nobody notices until the next contract review. If then.
 
 This happens more often than you'd expect, especially with:
+
 - SaaS and subscription services that adjust pricing silently
 - Service contracts where vendors change payment terms mid-contract
 - Expired contracts where invoices keep arriving without a renewal

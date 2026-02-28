@@ -8,7 +8,7 @@ I design and deliver event-driven backend systems that automate complex operatio
 
 With 15+ years of experience across finance and large-scale e-commerce, I focus on translating ambiguous business requirements into reliable, observable, and maintainable systems. My work spans policy-driven services, asynchronous processing patterns, and cloud-native automation.
 
-At Wayfair (Berlin), I worked on the Notifications and Supplier Actions platform, helping decouple legacy PHP workflows into event-driven microservices using Java, Spring Boot, Kafka, and Google Cloud. 
+At Wayfair (Berlin), I worked on the Notifications and Supplier Actions platform, helping decouple legacy PHP workflows into event-driven microservices using Java, Spring Boot, Kafka, and Google Cloud.
 
 Key initiatives included:
 

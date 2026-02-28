@@ -12,8 +12,18 @@ type Props = {
 };
 
 const { project } = Astro.props;
-const { title, description, descriptionDe, techStack, liveUrl, githubUrl, pubDatetime, image, logo, keywords } =
-  project.data;
+const {
+  title,
+  description,
+  descriptionDe,
+  techStack,
+  liveUrl,
+  githubUrl,
+  pubDatetime,
+  image,
+  logo,
+  keywords,
+} = project.data;
 
 const { Content } = await render(project);
 
@@ -73,22 +83,35 @@ const layoutProps = {
         logo && (
           <div class="shrink-0">
             {typeof logo === "string" ? (
-              <img src={logo} alt={`${title} logo`} class="h-8 w-auto sm:h-10" />
+              <img
+                src={logo}
+                alt={`${title} logo`}
+                class="h-8 w-auto sm:h-10"
+              />
             ) : (
-              <Image src={logo} alt={`${title} logo`} class="h-8 w-auto sm:h-10" layout="none" />
+              <Image
+                src={logo}
+                alt={`${title} logo`}
+                class="h-8 w-auto sm:h-10"
+                layout="none"
+              />
             )}
           </div>
         )
       }
     </div>
 
-    <div class="my-4 flex flex-wrap items-center gap-3 text-sm text-foreground/70">
+    <div
+      class="my-4 flex flex-wrap items-center gap-3 text-sm text-foreground/70"
+    >
       <time datetime={pubDatetime.toISOString()}>
-        {pubDatetime.toLocaleDateString("en-us", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        })}
+        {
+          pubDatetime.toLocaleDateString("en-us", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })
+        }
       </time>
       {
         liveUrl && (
