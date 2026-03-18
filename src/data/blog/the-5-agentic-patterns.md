@@ -37,11 +37,7 @@ Break a complex task into a sequence of smaller LLM calls, where the output of e
 
 **The mental model:** An assembly line. Each station does one thing well, and work flows in one direction.
 
-```
-┌───────┐     ┌────────┐     ┌────────┐     ┌────────┐     ┌────────┐
-│ Input │ ──► │ Step 1 │ ──► │ Step 2 │ ──► │ Step 3 │ ──► │ Output │
-└───────┘     └────────┘     └────────┘     └────────┘     └────────┘
-```
+![Prompt Chaining Pattern](/assets/prompt-chaining.png)
 
 **When to use it:** When your task has natural sequential stages and each stage benefits from focused attention. Analyzing a legal clause in three steps (extract → identify legal concepts → assess risk) is a good example. Trying to do all three in one prompt degrades quality because the model splits its attention.
 
@@ -55,17 +51,7 @@ A first LLM call classifies the input and sends it to the most appropriate speci
 
 **The mental model:** A switchboard operator. One person receives all calls and connects each one to the right department.
 
-```
-                        ┌──────────────────────┐
-                   ┌──► │   Billing specialist  │
-                   │    └──────────────────────┘
-┌───────────────┐  │    ┌──────────────────────┐
-│ Input→[Router]│ ─┼──► │ Technical specialist  │
-└───────────────┘  │    └──────────────────────┘
-                   │    ┌──────────────────────┐
-                   └──► │  Account specialist   │
-                        └──────────────────────┘
-```
+![Routing Pattern](/assets/routing.png)
 
 **When to use it:** When your inputs are diverse and a single generalist prompt handles all of them poorly. A support system handling billing questions, technical bugs, and account changes benefits from routing. Each category deserves a tight, focused prompt with domain-specific context.
 
@@ -79,17 +65,7 @@ Run multiple LLM calls simultaneously and aggregate the results.
 
 **The mental model:** A team working on different sections of the same document in parallel, then handing off to one person to combine them.
 
-```
-                   ┌──────────┐
-              ┌──► │ Worker A │ ──┐
-              │    └──────────┘   │
-┌───────┐     │    ┌──────────┐   │     ┌───────────┐     ┌────────┐
-│ Input │ ────┼──► │ Worker B │ ──┼───► │ Aggregate │ ──► │ Output │
-└───────┘     │    └──────────┘   │     └───────────┘     └────────┘
-              │    ┌──────────┐   │
-              └──► │ Worker C │ ──┘
-                   └──────────┘
-```
+![Parallelization Pattern](/assets/parallelization.png)
 
 Two variants worth distinguishing.
 
@@ -109,23 +85,7 @@ A high-level agent plans the work at runtime and delegates to specialized worker
 
 **The mental model:** A project manager and their team. The PM doesn't do the work. They figure out what needs doing, assign it, and put the results together.
 
-```
-┌───────┐     ┌───────────────┐
-│ Input │ ──► │ Orchestrator  │ ── decides at runtime what to delegate
-└───────┘     └───────┬───────┘
-                      │
-          ┌───────────┼───────────┐
-          ▼           ▼           ▼
-    ┌──────────┐ ┌──────────┐ ┌──────────┐
-    │ Worker A │ │ Worker B │ │ Worker C │
-    └──────────┘ └──────────┘ └──────────┘
-          │           │           │
-          └───────────┼───────────┘
-                      ▼
-               ┌─────────────┐     ┌────────┐
-               │ Orchestrator│ ──► │ Output │
-               └─────────────┘     └────────┘
-```
+![Orchestrator-Worker Pattern](/assets/orchestrator-worker.png)
 
 The key distinction from parallelization: the plan isn't hardcoded. The orchestrator decides at runtime which workers to invoke and in what order. That's what makes it powerful for open-ended tasks, and what makes it overkill for simple ones.
 
@@ -141,15 +101,7 @@ One LLM generates output. A second LLM evaluates it against defined criteria. If
 
 **The mental model:** A writer and an editor in a revision loop. The writer produces a draft, the editor marks it up, the writer revises. Repeat until the editor is satisfied or the deadline hits.
 
-```
-┌───────┐     ┌───────────┐     ┌───────────┐   pass   ┌────────┐
-│ Input │ ──► │ Generator │ ──► │ Evaluator │ ───────► │ Output │
-└───────┘     └───────────┘     └─────┬─────┘          └────────┘
-                    ▲                 │ fail
-                    │    feedback     │
-                    └─────────────────┘
-                     (repeat up to N times)
-```
+![Evaluator-Optimizer Pattern](/assets/evaluator-optimizer.png)
 
 **When to use it:** When you have a clear definition of "good enough" that's hard to express in a single generation prompt but easy to check separately. Code generation is the obvious case: generate → run tests → feed failures back → regenerate. The test suite is your evaluator.
 

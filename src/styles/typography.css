@@ -47,6 +47,10 @@
       @apply mx-auto border border-border;
     }
 
+    img[src$=".svg"] {
+      @apply border-0;
+    }
+
     figcaption {
       @apply opacity-75;
     }
