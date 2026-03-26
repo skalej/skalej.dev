@@ -16,7 +16,7 @@ A dead dependency fails fast. You get an error in milliseconds, circuit breaker 
 
 ## The 3 AM page
 
-It's 3 AM. You get paged. Your API is returning 500s. You pull up the dashboard. Your downstream payment service isn't down. It's responding. Just taking 8 seconds instead of 50ms.
+It's 3 AM. You get paged. Your API is returning 500s. You pull up the dashboard. Your downstream payment service isn't down. It's responding. Just taking 8 seconds instead of 200ms.
 
 Every thread in your application is blocked, waiting for a response that will eventually come. Your connection pool is exhausted. New requests pile up behind threads that are doing nothing. Your service is effectively dead, killed by a dependency that's technically alive.
 
@@ -70,7 +70,7 @@ This is what makes slow dependencies insidious. Your health checks pass. The ser
 
 By the time errors start appearing (connection pool timeouts, 503s, upstream cascading failures), the system is already deep in trouble. The failure was invisible until it was catastrophic.
 
-Two metrics catch this early. First, **outbound request latency per dependency** — specifically the p99, not the average. If your calls to a downstream service jump from 50ms to 2 seconds, the p99 moves long before the average does. Second, **server thread pool utilization**: `tomcat_threads_busy` vs `tomcat_threads_config_max`. If 180 of your 200 threads are occupied and rising, you're minutes from exhaustion even if error rate is still zero. Monitor these two — not just `/health`.
+One metric catches this early: **outbound request latency per dependency** — specifically the p99, not the average. If your calls to a downstream service jump from 200ms to 2 seconds, the p99 moves long before the average does. Monitor this — not just `/health`.
 
 Dead services announce themselves. Slow services hide.
 
@@ -80,8 +80,8 @@ This is the part that turns a single slow dependency into a multi-service outage
 
 Trace the failure path:
 
-1. **Service B slows down.** Response time goes from 50ms to 5 seconds. It's not down. Just slow.
-2. **Service A calls Service B.** A's threads block for 5 seconds per call instead of 50ms. A's thread pool fills up.
+1. **Service B slows down.** Response time goes from 200ms to 5 seconds. It's not down. Just slow.
+2. **Service A calls Service B.** A's threads block for 5 seconds per call instead of 200ms. A's thread pool fills up.
 3. **Service A stops responding.** It's not down either. It's just not processing new requests because all threads are occupied.
 4. **Service C calls Service A.** C's threads block. C's connection pool fills.
 5. **The cascade continues.** Every service upstream of B inherits B's latency and adds its own queuing delay on top.
@@ -101,20 +101,20 @@ Four patterns, layered together, make this work.
 The first line of defense. Every call to an external dependency needs two timeouts:
 
 - **Connection timeout:** how long to wait for the TCP handshake. This is just the doorbell. If the service doesn't answer quickly, it's either down or unreachable. For internal services (same VPC/datacenter), 1 second is plenty. For external services (third-party APIs, cross-region calls), allow 3–5 seconds since cross-internet handshakes through DNS chains, proxies, or VPNs legitimately take longer.
-- **Read timeout:** how long to wait for a response after the connection is established. This is where the actual work happens and where threads hang during a slowdown. Set it slightly above your p99 latency, not your worst case.
+- **Read timeout:** how long to wait for a response after the connection is established. This is where the actual work happens and where threads hang during a slowdown. Set it to a few multiples of your p99 latency, not your worst case.
 
 Here's an OkHttp client configured for a downstream service:
 
 ```kotlin
 val client = OkHttpClient.Builder()
     .connectTimeout(1, TimeUnit.SECONDS)
-    .readTimeout(2, TimeUnit.SECONDS)
+    .readTimeout(1, TimeUnit.SECONDS)
     .build()
 ```
 
 The defaults for most HTTP clients are 10–30 seconds. Most developers assume their framework's defaults are best practices. They're not. Defaults like 30 seconds are chosen to prevent accidental failures in low-traffic, high-latency environments. In a high-scale distributed system, a 30-second default is a suicide pact. That's 30 seconds of a blocked thread, during which hundreds of other requests have piled up behind it.
 
-**The rule:** set your timeout slightly above your p99 latency, not your worst case. If your downstream service's p99 is 50ms, a 2-second read timeout gives you plenty of headroom while still failing fast under genuine overload. Don't set it to your p99.9 or your worst-ever observed latency. Those are the exact scenarios where you *need* to fail fast.
+**The rule:** set your timeout to a few multiples of your p99 latency, not your worst case. If your downstream service's p99 is 300ms, a 1-second read timeout gives you enough headroom for normal variance while still failing fast under genuine overload. Don't set it to your p99.9 or your worst-ever observed latency. Those are the exact scenarios where you *need* to fail fast.
 
 The same principle applies to database connection pools. HikariCP's default `connection-timeout` is 30 seconds. A request will block for 30 seconds waiting for a pool connection before failing. Set it to 2 seconds:
 
@@ -133,7 +133,7 @@ jdbc:postgresql://host:5432/db?socketTimeout=2
 
 This kills any query that takes longer than 2 seconds, regardless of whether the connection pool had room. Teams often fix the HikariCP timeout (waiting for a seat at the table) but forget the JDBC socket timeout (waiting for the food to arrive). If you only fix the pool timeout, a single slow query can still hold a connection hostage for minutes once it's been checked out.
 
-A timeout is not just a safety net. It's a contractual limit on how much of your capacity you're willing to bet on a single call. If a dependency can't deliver in 40x its usual time, it shouldn't have your thread anymore.
+A timeout is not just a safety net. It's a contractual limit on how much of your capacity you're willing to bet on a single call.
 
 ### 2. Bulkhead (semaphore isolation)
 
@@ -144,15 +144,13 @@ The pattern: wrap every call to a shared dependency in a semaphore that limits c
 ```kotlin
 @Component
 class Bulkhead(
-    private val maxConcurrent: Int = 50,
-    private val waitMs: Long = 5
+    private val maxConcurrent: Int = 50
 ) {
     private val permits = Semaphore(maxConcurrent, true)
     private val rejected = AtomicLong(0)
 
     fun <T> run(block: () -> T): T {
-        val acquired = permits.tryAcquire(waitMs, TimeUnit.MILLISECONDS)
-        if (!acquired) {
+        if (!permits.tryAcquire()) {
             rejected.incrementAndGet()
             throw BulkheadRejectedException("bulkhead_full")
         }
@@ -170,7 +168,7 @@ class Bulkhead(
 class BulkheadRejectedException(message: String) : RuntimeException(message)
 ```
 
-The critical detail is `tryAcquire(5, TimeUnit.MILLISECONDS)`. This doesn't block indefinitely waiting for a permit. It waits 5ms, enough time for a normal request to complete and release a permit. If none is available, it throws immediately.
+The critical detail is `tryAcquire()` with no wait. If all permits are in use, it rejects immediately rather than queuing behind slow calls — which is exactly the behavior you want when a dependency is degraded.
 
 The bulkhead here is set to 50 permits. The right number depends on the dependency. For a database, start at or slightly above your pool size. For an HTTP dependency, base it on how many concurrent outbound calls your service can tolerate before latency degrades. The key is that it's a hard cap, not a suggestion.
 
